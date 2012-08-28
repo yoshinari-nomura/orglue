@@ -6,8 +6,19 @@
 
 ;;; Commentay:
 
+;; Bassic settings:
 ;;
-;; Compose octopress articles using org-mode.
+;; (setq orglue-octopress-staging-org-source  "~/prj/private/octopress/org_source")
+;; (setq orglue-octopress-staging-source      "~/prj/private/octopress/source")
+;; (setq orglue-octopress-staging-destination "~/prj/private/octopress/public")
+;; (setq orglue-octopress-setup-file          "~/sys/lib/org-sty/octpress.org")
+;; (orglue-octopress-setup-publish-project)
+;;
+;; M-x orglue-octopress
+;;
+;; Note:
+;;  In octopress/_config.yml, you must set the permelink attribute:
+;;    permalink: /blog/:year-:month-:day-:title.html
 ;;
 
 ;;; Code:
