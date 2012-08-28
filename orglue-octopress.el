@@ -172,10 +172,4 @@
      (format-time-string "%Y-%m-%d-%%s.org" time)
      (orglue-octopress-sanitize-title title))))
 
-(defun orglue-octopress-get-date-from-filename (filename)
-  (let ((fn (file-name-nondirectory filename)))
-    (if (string-match "^[0-9]+-[0-9]+-[0-9]+" fn)
-        (match-string 0 fn)
-      (format-time-string "%Y-%m-%d %H:%m" (current-time)))))
-
 (provide 'orglue-octopress)

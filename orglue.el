@@ -315,6 +315,12 @@ This hook is useful for settingup org-publish-project-alist before ``org-publish
            (plist-get (org-fix-agenda-info
                        (text-properties-at 0 (org-current-line-string))) 'txt)))
 
+(defun orglue-octopress-get-date-from-filename (filename)
+  (let ((fn (file-name-nondirectory filename)))
+    (if (string-match "^[0-9]+-[0-9]+-[0-9]+" fn)
+        (match-string 0 fn)
+      (format-time-string "%Y-%m-%d %H:%m" (current-time)))))
+
 (defun orglue-get-property-from-org-file (filename)
   (with-temp-buffer
     (let ((default-directory (file-name-directory filename))
@@ -324,7 +330,7 @@ This hook is useful for settingup org-publish-project-alist before ``org-publish
       (setq plist (org-infile-export-plist)
             title (or (plist-get plist :title) "Untitled")
             category (org-get-category)
-            date (org-jkl-get-date-from-filename filename))
+            date (orglue-octopress-get-date-from-filename filename))
       (list date (if (string= category "???") "" category) title filename))))
 
 (defun orglue-zipup-to-org-links (uris titles)
