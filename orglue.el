@@ -94,7 +94,7 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
 
 (global-set-key "\C-x\C-i" 'orglue-indent-rigidly-to-current-level)
 
-(defadvice org-indent-line (around org-indent-line)
+(defadvice org-indent-line (around org-indent-line-advice)
   (let ((org-in-item-p-orig (symbol-function 'org-in-item-p)))
     (flet ((org-in-item-p ()
                           (or (funcall org-in-item-p-orig)
