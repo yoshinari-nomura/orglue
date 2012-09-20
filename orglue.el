@@ -7,18 +7,13 @@
 ;;; Commentay:
 
 ;;; Code:
-
+;;;; Require
 (require 'org)
 (require 'org-publish)
 (require 'org-mac-link-grabber) ;; found in org-mode/contrib
 (require 'epic) ;; https://github.com/yoshinari-nomura/epic
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; OMLG (Org Mac Link Grabber) Everywhere
-;; 1) Remove unnecessary fringes of grabbed strings.
-;; 2) Decompose Org-style bracket link [[description][link]].
-;;
-
+;;;; OMLG (Org Mac Link Grabber) Everywhere
 (defun orglue-normalize-webpage-url (url-string)
   "Make clean URL; for example:
   Removing strings... from http://www.amazon.co.jp/strings.../dp/ASIN"
@@ -63,21 +58,7 @@
 
 (ad-activate 'omlg-grab-link)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; indent
-
-(defun orglue-indent-base-column (start end)
-  (let ((base-indent 1000))
-    (save-match-data
-      (save-excursion
-        (goto-char start)
-        (unless (bolp) (forward-line 1))
-        (while (< (point) end)
-          (unless (looking-at "^[ \t]*$")
-            (setq base-indent (min base-indent (current-indentation))))
-          (forward-line 1)))
-      (if (= base-indent 1000) 0 base-indent))))
-
+;;;; Indent
 (defun orglue-indent-rigidly-to-current-level (start end arg)
   "If called with C-u prefix (= arg 4) in org-mode buffer,
 indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
@@ -94,6 +75,18 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
 
 (global-set-key "\C-x\C-i" 'orglue-indent-rigidly-to-current-level)
 
+(defun orglue-indent-base-column (start end)
+  (let ((base-indent 1000))
+    (save-match-data
+      (save-excursion
+        (goto-char start)
+        (unless (bolp) (forward-line 1))
+        (while (< (point) end)
+          (unless (looking-at "^[ \t]*$")
+            (setq base-indent (min base-indent (current-indentation))))
+          (forward-line 1)))
+      (if (= base-indent 1000) 0 base-indent))))
+
 (defadvice org-indent-line (around org-indent-line-advice)
   (let ((org-in-item-p-orig (symbol-function 'org-in-item-p)))
     (flet ((org-in-item-p ()
@@ -105,10 +98,7 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
 
 (ad-activate 'org-indent-line)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Easy setup for publish-project to HTML
-;;;
-
+;;;; Easy setup for publish-project to HTML
 (defun orglue-update-publish-project-alist (project-alist-var projects)
   (let ((project-names (mapcar 'car projects))
         (project-alist (symbol-value project-alist-var)))
@@ -223,9 +213,7 @@ This hook is useful for settingup org-publish-project-alist before ``org-publish
 
 (ad-activate 'org-export)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; table
-
+;;;; Table
 (defun org-table-renumber ()
   (interactive)
   (let* ((col (org-table-current-column))
@@ -245,11 +233,10 @@ This hook is useful for settingup org-publish-project-alist before ``org-publish
         ))
     (message "Replaced %d number(s)." count)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Evernote
+;;;; Evernote
 
-; Add link type.
-; C-cC-o (org-open-at-point) works on evernote:// links.
+;; Add link type.
+;; C-cC-o (org-open-at-point) works on evernote:// links.
 
 (org-add-link-type "evernote" 'orglue-evernote-open)
 
@@ -281,8 +268,79 @@ This hook is useful for settingup org-publish-project-alist before ``org-publish
               org-file
               ))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; misc functions for manipulation of org structure
+;;;; DnD to Org buffer
+(define-key global-map [ns-drag-file] 'orglue-ns-insert-file)
+(define-key global-map [ns-drag-text] 'orglue-ns-insert-text)
+
+(defun orglue-ns-insert-file ()
+  (interactive)
+  (let ((file (file-truename (car ns-input-file))))
+    (setq ns-input-file (cdr ns-input-file))
+    (if (eq major-mode 'org-mode)
+        (insert (orglue-convert-file-to-org-link file))
+      (dnd-handle-one-url
+       (get-buffer-window)
+       'copy
+       (concat "file://" file)))))
+
+(defun orglue-ns-insert-text ()
+  (interactive)
+  (dnd-insert-text
+   (get-buffer-window)
+   'copy
+   (if (eq major-mode 'org-mode)
+       (orglue-convert-text-to-org-link ns-input-text)
+     ns-input-text)))
+
+;;;; Import images with some modification
+(defvar orglue-image-store-directory "dat/img")
+(defvar orglue-image-store-resize '(("jpg" . "800x600")))
+
+(defun orglue-screencapture-and-insert ()
+  (interactive)
+  (let ((directory (file-name-directory (buffer-file-name)))
+        (filename (format-time-string "img/screencapture-%Y%m%dT%H%M%S.png")))
+    (call-process "screencapture"
+                  nil nil nil "-i" "-P" (expand-file-name filename directory))
+    (insert (format "[[file:%s]]" filename))
+    (org-display-inline-images
+     nil
+     (point-min) (point-max))))
+
+(defun orglue-modify-path (path &optional dest-directory new-suffix)
+  (let* ((dir  (file-name-directory path))
+         (file (file-name-nondirectory path))
+         (node (file-name-sans-extension file))
+         (ext  (file-name-extension file)))
+    (expand-file-name
+     (format "%s.%s" node (or new-suffix ext))
+     (or dest-directory dir))))
+
+(defun orglue-confirm-files (src dst &optional overwrite)
+  (let* ((src (expand-file-name src))
+         (dst (expand-file-name dst))
+         (dir (file-name-directory dst)))
+    (unless (file-exists-p src)
+      (error "Source file does not exist (%s)" src))
+    (unless (file-accessible-directory-p dir)
+      (error "Destination directory is not accessible (%s)" dir))
+    (when (file-equal-p src dst)
+      (error "Source and destination are identical (%s)" src))
+    (when (and (file-exists-p dst) (not overwrite))
+      (error "Destination file already exists (%s)" dst)))
+  t)
+
+(defun orglue-import-image (path &optional dest-directory new-suffix geometry)
+  (let* ((new-path (orglue-modify-path path dest-directory new-suffix))
+         (default-opt '("-strip"))
+         (geom-opt (and geometry (list "-geometry" geometry))))
+    (orglue-confirm-files path new-path)
+    (with-output-to-string
+      (with-current-buffer standard-output
+        (apply 'call-process "convert" nil '(t t) nil
+               (append default-opt geom-opt (list path new-path)))))))
+
+;;;; Misc functions for manipulation of org structure
 
 (defvar orglue-org-project-file "~/prj/private/org/TODO.org")
 
@@ -329,9 +387,38 @@ This hook is useful for settingup org-publish-project-alist before ``org-publish
       (org-mode)
       (setq plist (org-infile-export-plist)
             title (or (plist-get plist :title) "Untitled")
+            published (or (plist-get plist :octopress-published) "true")
             category (org-get-category)
             date (orglue-octopress-get-date-from-filename filename))
-      (list date (if (string= category "???") "" category) title filename))))
+      (list date (if (string= category "???") "" category) title published filename))))
+
+
+;;;; Org-suitable link comporser
+
+(defun orglue-convert-file-to-org-link (path)
+  (let* ((path (file-truename path))
+         (dir  (file-name-directory path))
+         (file (file-name-nondirectory path))
+         (node (file-name-sans-extension file))
+         (ext  (downcase (file-name-extension file))))
+    (if (boundp 'orglue-image-store-directory)
+        (progn
+          (orglue-import-image
+           path
+           orglue-image-store-directory 
+           ext
+           (cdr (assoc ext orglue-image-store-resize)))
+          (concat "#+CAPTION: \n"
+                  (format "#+ATTR_HTML: alt=\"%s\"\n" node )
+                  (format "[[file:%s/%s.%s]]\n" orglue-image-store-directory node ext node)))
+      (format "[[file://%s][%s]]\n" path node))))
+
+(defun orglue-convert-text-to-org-link (text)
+  (cond
+   ((string-match "^evernote:" ns-input-text)
+    (orglue-zipup-to-org-links (split-string text " ") (epic-selected-note-titles)))
+   (t
+    text)))
 
 (defun orglue-zipup-to-org-links (uris titles)
   "Take two lists and zip up them to be org-style links like:
@@ -343,66 +430,6 @@ This hook is useful for settingup org-publish-project-alist before ``org-publish
       (setq uris   (cdr uris))
       (setq titles (cdr titles)))
     result))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; DnD to Org buffer
-
-(define-key global-map [ns-drag-file] 'orglue-ns-insert-file)
-(define-key global-map [ns-drag-text] 'orglue-ns-insert-text)
-
-(defun orglue-ns-insert-file ()
-  (interactive)
-  (let ((file))
-    (setq file (file-truename (car ns-input-file)))
-    (if (eq major-mode 'org-mode)
-        (orglue-ns-insert-file-to-org)
-      (dnd-handle-one-url
-       (get-buffer-window)
-       'copy
-       (concat "file://" file))
-      (setq ns-input-file nil))))
-
-(defun orglue-ns-insert-file-to-org ()
-  (interactive)
-  (let ((file))
-    (setq file (file-truename (car ns-input-file)))
-    (setq ns-input-file (cdr ns-input-file))
-    (insert (format "[[file://%s][%s]]"
-                    file
-                    (file-name-sans-extension
-                     (file-name-nondirectory file))))
-    (setq ns-input-file nil)))
-  
-(defun orglue-ns-insert-text ()
-  (interactive)
-  (if (eq major-mode 'org-mode)
-      (orglue-ns-insert-text-to-org)
-    (dnd-insert-text (get-buffer-window) 'copy ns-input-text)))
-
-(defun orglue-ns-insert-text-to-org ()
-  (interactive)
-  (cond
-   ((string-match "^evernote:" ns-input-text)
-    (insert (orglue-zipup-to-org-links
-             (split-string ns-input-text " ")
-             (epic-selected-note-titles)))
-    (setq ns-input-text nil))
-   (t
-    (dnd-insert-text (get-buffer-window) 'copy ns-input-text))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Make screen capture easy
-
-(defun orglue-screencapture-and-insert ()
-  (interactive)
-  (let ((directory (file-name-directory (buffer-file-name)))
-        (filename (format-time-string "img/screencapture-%Y%m%dT%H%M%S.png")))
-    (call-process "screencapture"
-                  nil nil nil "-i" "-P" (expand-file-name filename directory))
-    (insert (format "[[file:%s]]" filename))
-    (org-display-inline-images
-     nil
-     (point-min) (point-max))))
 
 (provide 'orglue)
 
