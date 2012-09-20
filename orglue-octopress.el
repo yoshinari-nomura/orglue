@@ -31,6 +31,16 @@
 (defvar orglue-octopress-staging-destination "~/prj/private/octopress/public")
 (defvar orglue-octopress-setup-file          "~/sys/lib/org-sty/octpress.org")
 
+(mapc (lambda (x) (add-to-list 'org-export-inbuffer-options-extra x))
+      '(
+        ("OCTOPRESS_LAYOUT"     :octopress-layout)
+        ("OCTOPRESS_PUBLISHED"  :octopress-published)
+        ;; worthless?
+        ;; ("OCTOPRESS_PERMALINK"  :octopress-permalink)
+        ;; ("OCTOPRESS_CATEGORIES" :octopress-categories)
+        ;; ("OCTOPRESS_CATEGORY"   :octopress-category)
+        ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Draft
 
@@ -40,16 +50,18 @@
     (find-file (expand-file-name
                 (orglue-octopress-new-post-file-name title date)
                 (concat orglue-octopress-staging-org-source  "/blog")))
-    (orglue-octopress-insert-export-options-template title date nil orglue-octopress-setup-file)))
+    (orglue-octopress-insert-export-options-template title date nil orglue-octopress-setup-file "true")))
 
-(defun orglue-octopress-insert-export-options-template (title date category setupfile)
+(defun orglue-octopress-insert-export-options-template (title date category setupfile published)
   (save-excursion
     (insert (format (concat
                      "#+TITLE: %s\n"
                      "#+DATE: %s\n"
                      "#+CATEGORY: %s\n"
-                     "#+SETUPFILE: %s\n\n* ")
-                    title date (or category "") setupfile)))
+                     "#+SETUPFILE: %s\n"
+                     "#+OCTOPRESS_PUBLISHED: %s\n\n *"
+                     )
+                    title date (or category "") setupfile published)))
   (re-search-forward "#\\+TITLE: " nil t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -116,6 +128,7 @@
     (insert (format "date: %s\n"  (nth 0 org-exporting-blog-property)))
     (insert (format "categories: %s\n" (nth 1 org-exporting-blog-property)))
     (insert (format "title: %s\n" (nth 2 org-exporting-blog-property)))
+    (insert (format "published: %s\n" (nth 3 org-exporting-blog-property)))
     (insert "comments: true\n")
     (insert "---\n")))
 
