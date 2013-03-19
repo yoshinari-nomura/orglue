@@ -1,22 +1,25 @@
 ;;; orglue.el -- more functionality to org-mode.
-
+;;
 ;; Author:  Yoshinari Nomura <nom@quickhack.net>
 ;; Created: 2012-08-28
-;; Revised: 
-
+;;
 ;;; Commentay:
-
+;;
 ;;; Code:
+;;
+
 ;;;; Require
+
 (require 'org)
-(require 'org-publish)
+
 (require 'org-mac-link-grabber) ;; found in org-mode/contrib
-(require 'epic) ;; https://github.com/yoshinari-nomura/epic
+(require 'epic)                 ;; https://github.com/yoshinari-nomura/epic
 
 ;;;; OMLG (Org Mac Link Grabber) Everywhere
+
 (defun orglue-normalize-webpage-url (url-string)
   "Make clean URL; for example:
-  Removing strings... from http://www.amazon.co.jp/strings.../dp/ASIN"
+  Removing ``strings...'' from http://www.amazon.co.jp/``strings...''/dp/ASIN"
   (save-match-data
     (cond
      ;; make plain link to amazon.
@@ -59,6 +62,7 @@
 (ad-activate 'omlg-grab-link)
 
 ;;;; Indent
+
 (defun orglue-indent-rigidly-to-current-level (start end arg)
   "If called with C-u prefix (= arg 4) in org-mode buffer,
 indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
@@ -151,10 +155,10 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
               org-title
               nil
               nil
-              org-file
-              ))))
+              org-file))))
 
 ;;;; DnD to Org buffer
+
 (define-key global-map [ns-drag-file] 'orglue-ns-insert-file)
 (define-key global-map [ns-drag-text] 'orglue-ns-insert-text)
 
@@ -179,8 +183,9 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
      ns-input-text)))
 
 ;;;; Import images with some modification
+
 (defvar orglue-image-store-directory "dat/img")
-(defvar orglue-image-store-resize '(("jpg" . "800x600")))
+(defvar orglue-image-store-resize '(("jpg" . "480x480>")))
 
 (defun orglue-screencapture-and-insert ()
   (interactive)
@@ -213,13 +218,14 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
     (when (file-equal-p src dst)
       (error "Source and destination are identical (%s)" src))
     (when (and (file-exists-p dst) (not overwrite))
-      (error "Destination file already exists (%s)" dst)))
-  t)
+      (unless (yes-or-no-p "Destination file already exists. Overwrite? ")
+        (error "Destination file already exists (%s)" dst)))
+    t))
 
 (defun orglue-import-image (path &optional dest-directory new-suffix geometry)
   (let* ((new-path (orglue-modify-path path dest-directory new-suffix))
          (default-opt '("-strip"))
-         (geom-opt (and geometry (list "-geometry" geometry))))
+         (geom-opt (and geometry (list "-resize" geometry))))
     (orglue-confirm-files path new-path)
     (with-output-to-string
       (with-current-buffer standard-output
@@ -233,12 +239,14 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
 (defun orglue-get-org-project-names (&optional org-file-path match)
   (let ((org-file-path (or org-file-path orglue-org-project-file))
         (match (or match "LEVEL=2+PROJECT")))
-    (org-map-entries (lambda ()
-                       (let ((string (org-link-display-format (nth 4 (org-heading-components)))))
-                         (put-text-property 0 1 'org-marker
-                                            (move-marker (make-marker) (point) (current-buffer)) string)
-                         string))
-                     match (list  org-file-path))))
+    (org-map-entries
+     (lambda ()
+       (let ((string (org-link-display-format (nth 4 (org-heading-components)))))
+         (put-text-property
+          0 1 'org-marker
+          (move-marker (make-marker) (point) (current-buffer)) string)
+         string))
+     match (list  org-file-path))))
 
 (defun orglue-make-link-to-project-top (&optional pom)
   (let ((project-top (org-entry-get (or pom (point)) "PROJECT_TOP")))
@@ -246,37 +254,11 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
         (org-make-link-string (concat "file:" project-top) "TOP")
       "   ")))
 
-(defun orglue-goto-id (id-string)
-  "ID-STRING is like: E47A9659-AC45-45B8-B4BD-520AD180A2B3"
-  (interactive)
-  (goto-char
-   (org-find-entry-with-id id-string))
-  (message (org-get-heading t t)))
-
 (defun orglue-headline-string ()
   (interactive)
   (message "head: %s\n"
            (plist-get (org-fix-agenda-info
                        (text-properties-at 0 (org-current-line-string))) 'txt)))
-
-(defun orglue-octopress-get-date-from-filename (filename)
-  (let ((fn (file-name-nondirectory filename)))
-    (if (string-match "^[0-9]+-[0-9]+-[0-9]+" fn)
-        (match-string 0 fn)
-      (format-time-string "%Y-%m-%d %H:%m" (current-time)))))
-
-(defun orglue-get-property-from-org-file (filename)
-  (with-temp-buffer
-    (let ((default-directory (file-name-directory filename))
-          plist title category date)
-      (insert-file filename)
-      (org-mode)
-      (setq plist (org-infile-export-plist)
-            title (or (plist-get plist :title) "Untitled")
-            published (or (plist-get plist :octopress-published) "true")
-            category (org-get-category)
-            date (orglue-octopress-get-date-from-filename filename))
-      (list date (if (string= category "???") "" category) title published filename))))
 
 
 ;;;; Org-suitable link comporser
@@ -286,8 +268,9 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
          (dir  (file-name-directory path))
          (file (file-name-nondirectory path))
          (node (file-name-sans-extension file))
-         (ext  (downcase (file-name-extension file))))
-    (if (boundp 'orglue-image-store-directory)
+         (ext  (downcase (or (file-name-extension file) ""))))
+    (if (and (boundp 'orglue-image-store-directory)
+             (assoc ext orglue-image-store-resize))
         (progn
           (orglue-import-image
            path
