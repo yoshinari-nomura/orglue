@@ -1,9 +1,15 @@
-;;; orglue.el -- more functionality to org-mode.
-;;
+;;; orglue.el --- more functionality to org-mode.
+
+;; Copyright (C) 2011, 2012 Yoshinari Nomura.
+;; All rights reserved.
+
 ;; Author:  Yoshinari Nomura <nom@quickhack.net>
 ;; Created: 2012-08-28
-;;
-;;; Commentay:
+;; Version: 1.0
+;; Package-Requires: ((epic "0.1") (org-mac-link-grabber "1.0.1"))
+;; Keywords: org
+
+;;; Commentary:
 ;;
 ;;; Code:
 ;;
@@ -303,10 +309,7 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
 (provide 'orglue)
 
 ;;; Copyright Notice:
-
-;; Copyright (C) 2011, 2012 Yoshinari Nomura.
-;; All rights reserved.
-
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions
 ;; are met:
