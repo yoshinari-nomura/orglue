@@ -6,7 +6,7 @@
 ;; Author:  Yoshinari Nomura <nom@quickhack.net>
 ;; Created: 2012-08-28
 ;; Version: 1.0
-;; Package-Requires: ((org "8.0") (epic "0.1") (org-mac-link-grabber "1.0.1"))
+;; Package-Requires: ((org "8.1") (epic "0.1") (org-mac-link "1.2"))
 ;; Keywords: org
 
 ;;; Commentary:
@@ -18,10 +18,12 @@
 
 (require 'org)
 
-(require 'org-mac-link-grabber) ;; found in org-mode/contrib
-(require 'epic)                 ;; https://github.com/yoshinari-nomura/epic
+(when (featurep 'ns)
+  (require 'org-mac-link) ;; found in org-mode/contrib
+  (require 'epic)         ;; https://github.com/yoshinari-nomura/epic
+  )
 
-;;;; OMLG (Org Mac Link Grabber) Everywhere
+;;;; Org Mac Link Grabber Everywhere
 
 (defun orglue-normalize-webpage-url (url-string)
   "Make clean URL; for example:
@@ -61,11 +63,11 @@
         (delete-region (match-beginning 0) (match-end 0)))
     (message "No bracket-link found.")))
 
-(defadvice omlg-grab-link (after omlg-grab-link-advice)
-  (unless (eq major-mode 'org-mode)
-    (orglue-decompose-last-org-bracket-link)))
-
-(ad-activate 'omlg-grab-link)
+(when (fboundp 'org-mac-grab-link)
+  (defadvice org-mac-grab-link (after org-mac-grab-link-advice)
+    (unless (eq major-mode 'org-mode)
+      (orglue-decompose-last-org-bracket-link)))
+  (ad-activate 'org-mac-grab-link))
 
 ;;;; Indent
 
