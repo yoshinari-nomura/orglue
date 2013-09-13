@@ -75,7 +75,7 @@
   "If called with C-u prefix (= arg 4) in org-mode buffer,
 indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
   (interactive "r\np")
-  (indent-rigidly 
+  (indent-rigidly
    start
    end
    (if (and (eq major-mode 'org-mode)
@@ -103,7 +103,7 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
   (let ((org-in-item-p-orig (symbol-function 'org-in-item-p)))
     (flet ((org-in-item-p ()
                           (or (funcall org-in-item-p-orig)
-                              (save-excursion 
+                              (save-excursion
                                 (beginning-of-line 0)
                                 (funcall org-in-item-p-orig)))))
       ad-do-it)))
@@ -282,7 +282,7 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
         (progn
           (orglue-import-image
            path
-           orglue-image-store-directory 
+           orglue-image-store-directory
            ext
            (cdr (assoc ext orglue-image-store-resize)))
           (concat "#+CAPTION: \n"
