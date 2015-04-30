@@ -6,7 +6,7 @@
 ;; Author:  Yoshinari Nomura <nom@quickhack.net>
 ;; Created: 2012-08-28
 ;; Version: 1.0
-;; Package-Requires: ((org "8.1") (epic "0.1") (org-mac-link "1.2"))
+;; Package-Requires: ((org "8.1") (epic "0.2") (org-mac-link "1.2"))
 ;; Keywords: org
 
 ;;; Commentary:
@@ -134,36 +134,21 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
 ;;;; Evernote
 
 ;; Add link type.
+;; Org-mode becomes to recognize evernote:// links
+(eval-after-load 'org
+  '(if (and (boundp 'org-link-protocols)
+            (not (assoc "evernote" org-link-protocols)))
+       (org-add-link-type "evernote" 'orglue-org-evernote-note-open)))
+
 ;; C-cC-o (org-open-at-point) works on evernote:// links.
-
-(org-add-link-type "evernote" 'orglue-evernote-open)
-
-(defun orglue-evernote-open (path)
+(defun orglue-org-evernote-note-open (path)
   (browse-url (concat "evernote:" path)))
 
-(defun orglue-evernote-insert-selected-note-as-org-links ()
-  "Capture selected notes in Evernote, and insert org-style links."
-  (interactive)
-  (insert (orglue-zipup-to-org-links
-           (epic-selected-note-uris)
-           (epic-selected-note-titles))))
+(defalias 'orglue-evernote-insert-selected-note-as-org-links
+  'epic-insert-selected-note-as-org-links)
 
-(defun orglue-evernote-create-note-from-org-buffer ()
-  (interactive)
-  (let* ((htmlize-output-type 'font)
-         (org-export-html-xml-declaration nil)
-         (org-file (buffer-file-name))
-         (org-plist (org-combine-plists
-                     (org-default-export-plist)
-                     (org-infile-export-plist)))
-         (org-title (or (plist-get org-plist :title) "")))
-    (message "%s"
-             (epic-create-note-from-html-string
-              (org-export-region-as-html (point-min) (point-max) nil 'string)
-              org-title
-              nil
-              nil
-              org-file))))
+(defalias 'orglue-evernote-create-note-from-org-buffer
+  'epic-create-note-from-org-buffer)
 
 ;;;; DnD to Org buffer
 
