@@ -85,8 +85,6 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
           (orglue-indent-base-column start end))
      arg)))
 
-(global-set-key "\C-x\C-i" 'orglue-indent-rigidly-to-current-level)
-
 (defun orglue-indent-base-column (start end)
   (let ((base-indent 1000))
     (save-match-data
@@ -108,7 +106,6 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
                                 (funcall org-in-item-p-orig)))))
       ad-do-it)))
 
-(ad-activate 'org-indent-line)
 
 ;;;; Table
 
@@ -151,9 +148,6 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
   'epic-create-note-from-org-buffer)
 
 ;;;; DnD to Org buffer
-
-(define-key global-map [ns-drag-file] 'orglue-ns-insert-file)
-(define-key global-map [ns-drag-text] 'orglue-ns-insert-text)
 
 (defun orglue-ns-insert-file ()
   (interactive)
