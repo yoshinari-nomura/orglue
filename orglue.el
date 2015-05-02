@@ -59,6 +59,7 @@ DESCRIPTION is normalized by ``orglue-normalize-webpage-url''."
               (orglue-normalize-webpage-url   (or (match-string 1 link-string) "")))
       (list "" ""))))
 
+;;;###autoload
 (defun orglue-decompose-last-org-bracket-link ()
   "Find LINK-STRING backward and decompose it.
 Decompose means that [[URL][DESCRIPTION]] is converted into
@@ -83,6 +84,7 @@ normalized by ``orglue-normalize-webpage-url''."
 
 ;;;; Indent
 
+;;;###autoload
 (defun orglue-indent-rigidly-to-current-level (start end arg)
   "Same with ``indent-rigidly'', if not in ``org-mode''.
 Takes three arguments, START, END and ARG.
@@ -132,6 +134,7 @@ inside the list item (two spaces are added in this case)."
 
 ;;;; Table
 
+;;;###autoload
 (defun org-table-renumber ()
   "Renumber current columns on org-table.
 No effect if current columns contain any non-number chars."
@@ -166,6 +169,7 @@ No effect if current columns contain any non-number chars."
 (defun orglue-org-evernote-note-open (path)
   (browse-url (concat "evernote:" path)))
 
+;;;###autoload
 (defalias 'orglue-evernote-insert-selected-note-as-org-links
   'epic-insert-selected-note-as-org-links)
 
@@ -174,6 +178,7 @@ No effect if current columns contain any non-number chars."
 
 ;;;; DnD to Org buffer
 
+;;;###autoload
 (defun orglue-ns-insert-file ()
   (interactive)
   (let ((file (file-truename (car ns-input-file))))
@@ -185,6 +190,7 @@ No effect if current columns contain any non-number chars."
        'copy
        (concat "file://" file)))))
 
+;;;###autoload
 (defun orglue-ns-insert-text ()
   (interactive)
   (dnd-insert-text
@@ -199,6 +205,7 @@ No effect if current columns contain any non-number chars."
 (defvar orglue-image-store-directory "dat/img")
 (defvar orglue-image-store-resize '(("jpg" . "480x480>")))
 
+;;;###autoload
 (defun orglue-screencapture-and-insert ()
   (interactive)
   (let ((directory (file-name-directory (buffer-file-name)))
@@ -266,6 +273,7 @@ No effect if current columns contain any non-number chars."
         (org-make-link-string (concat "file:" project-top) "TOP")
       "   ")))
 
+;;;###autoload
 (defun orglue-headline-string ()
   (interactive)
   (message "head: %s\n"
