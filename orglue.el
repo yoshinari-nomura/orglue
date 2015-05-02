@@ -17,6 +17,9 @@
 ;;;; Require
 
 (require 'org)
+(require 'org-table)
+(require 'org-agenda)
+(require 'ox)
 
 (when (featurep 'ns)
   (require 'org-mac-link) ;; found in org-mode/contrib
@@ -301,6 +304,9 @@ No effect if current columns contain any non-number chars."
                   (format "#+ATTR_HTML: alt=\"%s\"\n" node )
                   (format "[[file:%s/%s.%s]]\n" orglue-image-store-directory node ext node)))
       (format "[[file://%s][%s]]\n" path node))))
+
+
+(declare-function epic-selected-note-titles "epic")
 
 (defun orglue-convert-text-to-org-link (text)
   (cond
