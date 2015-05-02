@@ -16,6 +16,7 @@
 
 ;;;; Require
 
+(require 'cl-lib)
 (require 'org)
 (require 'org-table)
 (require 'org-agenda)
@@ -118,13 +119,6 @@ adjust indent level best suited to org-style."
       (if (= base-indent 1000) 0 base-indent))))
 
 (defadvice org-indent-line (around org-indent-line-advice)
-  (let ((org-in-item-p-orig (symbol-function 'org-in-item-p)))
-    (flet ((org-in-item-p ()
-                          (or (funcall org-in-item-p-orig)
-                              (save-excursion
-                                (beginning-of-line 0)
-                                (funcall org-in-item-p-orig)))))
-      ad-do-it)))
   "Make magic TAB indent work well in plain list.
 For example:
 
@@ -133,6 +127,14 @@ For example:
 
 This advice changes this rule, it eagerly indent the line up to
 inside the list item (two spaces are added in this case)."
+  (cl-letf ((org-in-item-p-orig (symbol-function 'org-in-item-p))
+            ((symbol-function 'org-in-item-p)
+             (lambda ()
+               (or (org-in-item-p-orig)
+                   (save-excursion
+                     (beginning-of-line 0)
+                     (org-in-item-p-orig))))))
+    ad-do-it))
 
 
 ;;;; Table
