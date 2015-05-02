@@ -26,8 +26,9 @@
 ;;;; Org Mac Link Grabber Everywhere
 
 (defun orglue-normalize-webpage-url (url-string)
-  "Make clean URL; for example:
-  Removing ``strings...'' from http://www.amazon.co.jp/``strings...''/dp/ASIN"
+  "Remove garbages from URL-STRING.
+For example: remove xxxxx... from:
+  http://www.amazon.com/xxxxx.../dp/ASIN"
   (save-match-data
     (cond
      ;; make plain link to amazon.
@@ -37,8 +38,8 @@
       url-string))))
 
 (defun orglue-normalize-webpage-title (title-string)
-  "Nomalize title string of web pages; for example:
-  Remove ``Amazon.com: '' from URL title"
+  "Nomalize TITLE-STRING of web pages; for example:
+Remove ``Amazon.com: '' from URL title"
   (save-match-data
     (cond
      ((string-match "^Amazon\\.\\(co\\.jp\\|com\\)[：:] *\\(.*\\)" title-string)
@@ -47,6 +48,10 @@
       title-string))))
 
 (defun orglue-decompose-org-bracket-link (link-string)
+  "Return a list (URL DESCRIPTION) from LINK-STRING.
+LINK-STRING is in the form of [[URL][DESCRIPTION]].
+URL is normalized by ``orglue-normalize-webpage-title''
+DESCRIPTION is normalized by ``orglue-normalize-webpage-url''."
   (save-match-data
     (if (string-match org-bracket-link-regexp link-string)
         ;; 1: url, 3: anchor string
@@ -55,6 +60,13 @@
       (list "" ""))))
 
 (defun orglue-decompose-last-org-bracket-link ()
+  "Find LINK-STRING backward and decompose it.
+Decompose means that [[URL][DESCRIPTION]] is converted into
+URL\nDESCRIPTION\n.
+
+On conversion, URL is normalized by
+``orglue-normalize-webpage-title'' and DESCRIPTION is
+normalized by ``orglue-normalize-webpage-url''."
   (interactive)
   (if (save-excursion (re-search-backward org-bracket-link-regexp nil t))
       (progn
@@ -72,8 +84,10 @@
 ;;;; Indent
 
 (defun orglue-indent-rigidly-to-current-level (start end arg)
-  "If called with C-u prefix (= arg 4) in org-mode buffer,
-indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
+  "Same with ``indent-rigidly'', if not in ``org-mode''.
+Takes three arguments, START, END and ARG.
+If in ``org-mode'' and ARG is 4 (called with universal-prefix),
+adjust indent level best suited to org-style."
   (interactive "r\np")
   (indent-rigidly
    start
@@ -86,6 +100,7 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
      arg)))
 
 (defun orglue-indent-base-column (start end)
+  "Return minimum indent depth in region between START and END."
   (let ((base-indent 1000))
     (save-match-data
       (save-excursion
@@ -105,11 +120,21 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
                                 (beginning-of-line 0)
                                 (funcall org-in-item-p-orig)))))
       ad-do-it)))
+  "Make magic TAB indent work well in plain list.
+For example:
+
+  + This is plain list
+  If the cursor is on this line, TAB does not add indent by default.
+
+This advice changes this rule, it eagerly indent the line up to
+inside the list item (two spaces are added in this case)."
 
 
 ;;;; Table
 
 (defun org-table-renumber ()
+  "Renumber current columns on org-table.
+No effect if current columns contain any non-number chars."
   (interactive)
   (let* ((col (org-table-current-column))
          (val (org-table-get nil nil))
@@ -277,8 +302,8 @@ indent to fit the current outline level. Otherwise, do ``indent-rigidly''."
     text)))
 
 (defun orglue-zipup-to-org-links (uris titles)
-  "Take two lists and zip up them to be org-style links like:
-    [[URI1][TITLE1]] LF [[URI2][TITLE2]]..."
+  "Take two lists URIS and TITLES, zip up them to be org-style links.
+Org-style link is [[URI1][TITLE1]] LF [[URI2][TITLE2]]..."
   (let ((result ""))
     (while (and (car uris) (car titles))
       (setq result
