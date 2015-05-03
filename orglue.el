@@ -305,7 +305,7 @@ No effect if current columns contain any non-number chars."
            (cdr (assoc ext orglue-image-store-resize)))
           (concat "#+CAPTION: \n"
                   (format "#+ATTR_HTML: alt=\"%s\"\n" node )
-                  (format "[[file:%s/%s.%s]]\n" orglue-image-store-directory node ext node)))
+                  (format "[[file:%s/%s.%s]]\n" orglue-image-store-directory node ext)))
       (format "[[file://%s][%s]]\n" path node))))
 
 
