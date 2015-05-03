@@ -83,9 +83,10 @@ normalized by ``orglue-normalize-webpage-url''."
 
 (when (fboundp 'org-mac-grab-link)
   (defadvice org-mac-grab-link (after org-mac-grab-link-advice)
+    "Call ``orglue-decompose-last-org-bracket-link' if current buffer
+is not org-mode."
     (unless (eq major-mode 'org-mode)
-      (orglue-decompose-last-org-bracket-link)))
-  (ad-activate 'org-mac-grab-link))
+      (orglue-decompose-last-org-bracket-link))))
 
 ;;;; Indent
 
