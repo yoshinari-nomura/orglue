@@ -46,8 +46,9 @@ For example: remove xxxxx... from:
 Remove ``Amazon.com: '' from URL title"
   (save-match-data
     (cond
-     ((string-match "^Amazon\\.\\(co\\.jp\\|com\\)[：:] *\\(.*\\)" title-string)
-      (match-string 2 title-string))
+     ((string-match "^Amazon\\.[a-z.]+ *[：:|] *\\(.*\\)"
+                    title-string)
+      (match-string 1 title-string))
      (t
       title-string))))
 
@@ -312,7 +313,7 @@ No effect if current columns contain any non-number chars."
 
 (defun orglue-convert-text-to-org-link (text)
   (cond
-   ((string-match "^evernote:" ns-input-text)
+   ((string-match "^\\(evernote:\\|https://www.evernote.com/shard\\)" ns-input-text)
     (orglue-zipup-to-org-links (split-string text " ") (epic-selected-note-titles)))
    (t
     text)))
