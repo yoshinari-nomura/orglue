@@ -6,7 +6,7 @@
 ;; Author:  Yoshinari Nomura <nom@quickhack.net>
 ;; Created: 2012-08-28
 ;; Version: 1.0
-;; Package-Requires: ((org "8.1") (epic "0.2") (org-mac-link "1.2"))
+;; Package-Requires: ((org "8.1") (epic "0.2"))
 ;; Keywords: org
 
 ;;; Commentary:
