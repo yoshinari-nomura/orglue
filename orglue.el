@@ -1,12 +1,12 @@
 ;;; orglue.el --- more functionality to org-mode.
 
-;; Copyright (C) 2011-2015 Yoshinari Nomura.
+;; Copyright (C) 2011-2020 Yoshinari Nomura.
 ;; All rights reserved.
 
 ;; Author:  Yoshinari Nomura <nom@quickhack.net>
 ;; Created: 2012-08-28
 ;; Version: 1.0
-;; Package-Requires: ((org "8.1") (epic "0.2"))
+;; Package-Requires: ((org "9.3") (epic "0.2"))
 ;; Keywords: org
 
 ;;; Commentary:
@@ -58,9 +58,9 @@ LINK-STRING is in the form of [[URL][DESCRIPTION]].
 URL is normalized by ``orglue-normalize-webpage-title''
 DESCRIPTION is normalized by ``orglue-normalize-webpage-url''."
   (save-match-data
-    (if (string-match org-bracket-link-regexp link-string)
-        ;; 1: url, 3: anchor string
-        (list (orglue-normalize-webpage-title (or (match-string 3 link-string) ""))
+    (if (string-match org-link-bracket-re link-string)
+        ;; 1: url, 2: anchor string
+        (list (orglue-normalize-webpage-title (or (match-string 2 link-string) ""))
               (orglue-normalize-webpage-url   (or (match-string 1 link-string) "")))
       (list "" ""))))
 
@@ -333,20 +333,18 @@ Org-style link is [[URI1][TITLE1]] LF [[URI2][TITLE2]]..."
 ;;;; Helm
 
 (defvar helm-c-source-org-projects
-  '((name . "Org Projects")
-    (candidates . orglue-get-org-project-names)
-    (migemo)
-    (action
-     ("Pop To Org Node" .
-      (lambda (candidate)
-        (let (marker)
-          ;; re-get text-property
-          (setq candidate
-                (car (member candidate (orglue-get-org-project-names))))
-          (when (and candidate
-                     (setq marker (get-text-property 0 'org-marker candidate)))
-            (org-goto-marker-or-bmk marker))))))
-    ))
+  (helm-build-sync-source "Org Projects"
+    :candidates 'orglue-get-org-project-names
+    :migemo t
+    :action
+    (lambda (candidate)
+      (let (marker)
+        ;; re-get text-property
+        (setq candidate
+              (car (member candidate (orglue-get-org-project-names))))
+        (when (and candidate
+                   (setq marker (get-text-property 0 'org-marker candidate)))
+          (org-goto-marker-or-bmk marker))))))
 
 (provide 'orglue)
 
